@@ -150,17 +150,12 @@ class TaichungRentalSpider(Rental591Spider):
 
     def send_discord_webhook(self, webhook_url, info):
         data = {
-            "content": f"[{info['title']}]({info['url']})",
             "embeds": [
                 {
                     "title": info['title'],
                     "url": info['url'],
-                    "description": f"💰{info['price']}  \n{info['room_type']}  \n{info['owner_info']} \n{' '.join(info['tag_list'])}",
+                    "description": f"💰{info['price']}  \n\n{info['room_type']} \n\n{' '.join(info['tag_list'])}",
                     "image": {"url": info['img_url']} if info['img_url'] else {},
-                    "fields": [
-                        {"name": "連結",
-                            "value": f"[點這看房]({info['url']})", "inline": False}
-                    ]
                 }
             ]
         }
