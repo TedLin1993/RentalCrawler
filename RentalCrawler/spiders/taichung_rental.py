@@ -50,7 +50,9 @@ class TaichungRentalSpider(Rental591Spider):
             raw = house['raw']
             if house_id not in self.requested_houses:
                 self.requested_houses.add(house_id)
-                yield self.gen_house_info(raw)
+                info = self.gen_house_info(raw)
+                info['house_id'] = house_id
+                yield info
     
     def gen_house_info(self, raw):
         soup = BeautifulSoup(raw, "lxml")
