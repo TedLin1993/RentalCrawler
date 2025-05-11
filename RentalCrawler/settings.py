@@ -1,5 +1,6 @@
 import scrapy
 import logging
+import datetime
 
 scrapy.utils.log.configure_logging(install_root_handler=False)
 logging.basicConfig(
@@ -10,7 +11,10 @@ logging.basicConfig(
 
 LOG_LEVEL = 'INFO'
 USER_AGENT = 'sample-test-bot'
-FEED_FORAMT = 'jsonlines'
+
+today = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+FEED_URI = f"rental_data_{today}.csv"
+FEED_FORMAT = "csv"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
