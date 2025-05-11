@@ -1,1 +1,4 @@
 .vscode/launch.json
+.venv/
+scrapy.log
+*/__pycache__/
