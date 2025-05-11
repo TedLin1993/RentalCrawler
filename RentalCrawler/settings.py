@@ -12,9 +12,9 @@ logging.basicConfig(
 LOG_LEVEL = 'INFO'
 USER_AGENT = 'sample-test-bot'
 
-today = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-FEED_URI = f"rental_data_{today}.csv"
-FEED_FORMAT = "csv"
+# today = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+# FEED_URI = f"rental_data_{today}.csv"
+# FEED_FORMAT = "csv"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True

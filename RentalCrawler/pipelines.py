@@ -1,5 +1,6 @@
 import sqlite3
 import json
+from scrapy.exceptions import DropItem
 
 class HouseDedupPipeline:
     def open_spider(self, spider):

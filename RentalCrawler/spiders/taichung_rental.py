@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from scrapy_twrh.spiders.rental591 import Rental591Spider, util
+import sqlite3
   
 class TaichungRentalSpider(Rental591Spider):  
     name = 'taichung_rental'  
@@ -18,6 +19,13 @@ class TaichungRentalSpider(Rental591Spider):
         }
         
         self.max_page = 1  # 限制爬取頁數 
+        
+        self.dup_house_ids = set()
+        conn = sqlite3.connect('rental_house.sqlite3')
+        c = conn.cursor()
+        for row in c.execute('SELECT house_id FROM rental_house'):
+            self.dup_house_ids.add(row[0])
+        conn.close()
     
     # 取得台中市的租屋列表請求
     def gen_list_request_args(self, rental_meta):  
@@ -48,8 +56,8 @@ class TaichungRentalSpider(Rental591Spider):
         for house in regular_houses:  
             house_id = house['house_id']
             raw = house['raw']
-            if house_id not in self.requested_houses:
-                self.requested_houses.add(house_id)
+            if house_id not in self.dup_house_ids:
+                self.dup_house_ids.add(house_id)
                 info = self.gen_house_info(raw)
                 info['house_id'] = house_id
                 yield info
