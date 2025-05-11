@@ -2,3 +2,5 @@
 .venv/
 scrapy.log
 */__pycache__/
+taichung_rental_data.csv
+RentalCrawler/spiders/__pycache__/

@@ -1,3 +1,13 @@
+import scrapy
+import logging
+
+scrapy.utils.log.configure_logging(install_root_handler=False)
+logging.basicConfig(
+    filename='scrapy.log',
+    format='%(levelname)s: %(message)s',
+    level=logging.INFO
+)
+
 LOG_LEVEL = 'INFO'
 USER_AGENT = 'sample-test-bot'
 FEED_FORAMT = 'jsonlines'
@@ -5,8 +15,8 @@ FEED_FORAMT = 'jsonlines'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
-SPIDER_MODULES = ['crawler.spiders']
-NEWSPIDER_MODULE = 'crawler.spiders'
+SPIDER_MODULES = ['RentalCrawler.spiders']
+NEWSPIDER_MODULE = 'RentalCrawler.spiders'
 
 # Need to be aware of meta redirect to avoid unnecessary download
 METAREFRESH_ENABLED = False
