@@ -1,0 +1,6 @@
+scrapy>=2.7
+scrapy-playwright
+playwright
+beautifulsoup4
+lxml
+scrapy-tw-rental-house==2.1.3
