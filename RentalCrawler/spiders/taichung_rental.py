@@ -1,27 +1,31 @@
 from bs4 import BeautifulSoup
 from scrapy_twrh.spiders.rental591 import Rental591Spider, util
 import sqlite3
-  
-class TaichungRentalSpider(Rental591Spider):  
-    name = 'taichung_rental'  
-      
-    def __init__(self):  
-        # 指定台中市作為目標城市  
+import requests
+import os
+from dotenv import load_dotenv
+
+
+class TaichungRentalSpider(Rental591Spider):
+    name = 'taichung_rental'
+
+    def __init__(self):
+        # 指定台中市作為目標城市
         super().__init__(
             target_cities=['台中市'],
-        )  
-          
-        # 指定要爬取的區域、價格範圍和屋主直租  
-        self.filter_params = {  
-            'section': '103,102,101,98,99',  # 中區,西區,北屯區,東區,北區的代碼  
-            'price': '10000_17000',  # 租金範圍10000-17000  
-            'shType': 'host', # 屋主直租
+        )
+
+        # 指定要爬取的區域、價格範圍和屋主直租
+        self.filter_params = {
+            'section': '103,102,101,98,99',  # 中區,西區,北屯區,東區,北區的代碼
+            'price': '10000_17000',  # 租金範圍10000-17000
+            'shType': 'host',  # 屋主直租
         }
-        
-        self.max_page = 1  # 限制爬取頁數 
-        
+
+        self.max_page = 1  # 限制爬取頁數
+
         self.dup_house_ids = set()
-        
+
         conn = sqlite3.connect('rental_house.sqlite3')
         c = conn.cursor()
         c.execute('''
@@ -40,42 +44,48 @@ class TaichungRentalSpider(Rental591Spider):
         for row in c.execute('SELECT house_id FROM rental_house'):
             self.dup_house_ids.add(row[0])
         conn.close()
-    
+
+        load_dotenv()
+        self.discord_webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
+
     # 取得台中市的租屋列表請求
-    def gen_list_request_args(self, rental_meta):  
-        args = super().gen_list_request_args(rental_meta)  
-          
-        # 將URL參數添加到請求URL中  
-        url = args['url']  
-        filter_params = '&'.join([f"{k}={v}" for k, v in self.filter_params.items()])  
-        args['url'] = f"{url}&{filter_params}" 
-          
+    def gen_list_request_args(self, rental_meta):
+        args = super().gen_list_request_args(rental_meta)
+
+        # 將URL參數添加到請求URL中
+        url = args['url']
+        filter_params = '&'.join(
+            [f"{k}={v}" for k, v in self.filter_params.items()])
+        args['url'] = f"{url}&{filter_params}"
+
         return args
-    
+
     # 只取第一頁的資料
-    def default_parse_list(self, response):  
-        meta = response.meta['rental']  
-        
-        if meta.page >= self.max_page:    
-            return  
-    
-        yield self.gen_list_request(util.ListRequestMeta(  
-            meta.id,  
-            meta.name,  
-            1,  
-        ))  
-    
-        regular_houses = self.gen_regular_house(response)  
-    
-        for house in regular_houses:  
+    def default_parse_list(self, response):
+        meta = response.meta['rental']
+
+        if meta.page >= self.max_page:
+            return
+
+        yield self.gen_list_request(util.ListRequestMeta(
+            meta.id,
+            meta.name,
+            1,
+        ))
+
+        regular_houses = self.gen_regular_house(response)
+
+        for house in regular_houses:
             house_id = house['house_id']
             raw = house['raw']
             if house_id not in self.dup_house_ids:
                 self.dup_house_ids.add(house_id)
                 info = self.gen_house_info(raw)
                 info['house_id'] = house_id
+                if self.discord_webhook_url:
+                    self.send_discord_webhook(self.discord_webhook_url, info)
                 yield info
-    
+
     def gen_house_info(self, raw):
         soup = BeautifulSoup(raw, "lxml")
 
@@ -94,7 +104,7 @@ class TaichungRentalSpider(Rental591Spider):
         img_url = ""
         img_tag = soup.find("ul", class_="image-list")
         if img_tag:
-            first_img = img_tag.find("img", attrs={"data-src":True})
+            first_img = img_tag.find("img", attrs={"data-src": True})
             if first_img:
                 img_url = first_img["data-src"]
 
@@ -123,10 +133,11 @@ class TaichungRentalSpider(Rental591Spider):
 
         # 屋主與更新時間
         owner_info = ""
-        role_name = soup.find("div", class_="item-info-txt role-name ml-2px mt-2px mb-8px")
+        role_name = soup.find(
+            "div", class_="item-info-txt role-name ml-2px mt-2px mb-8px")
         if role_name:
             owner_info = " ".join([t.text for t in role_name.find_all("span")])
-        
+
         return {
             'url': url,
             'title': title,
@@ -136,3 +147,24 @@ class TaichungRentalSpider(Rental591Spider):
             'tag_list': tag_list,
             'owner_info': owner_info,
         }
+
+    def send_discord_webhook(self, webhook_url, info):
+        data = {
+            "content": f"[{info['title']}]({info['url']})",
+            "embeds": [
+                {
+                    "title": info['title'],
+                    "url": info['url'],
+                    "description": f"💰{info['price']}  \n{info['room_type']}  \n{info['owner_info']} \n{' '.join(info['tag_list'])}",
+                    "image": {"url": info['img_url']} if info['img_url'] else {},
+                    "fields": [
+                        {"name": "連結",
+                            "value": f"[點這看房]({info['url']})", "inline": False}
+                    ]
+                }
+            ]
+        }
+        resp = requests.post(webhook_url, json=data)
+        if not resp.ok:
+            print("Failed to send Discord webhook:",
+                  resp.status_code, resp.text)
