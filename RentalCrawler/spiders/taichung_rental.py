@@ -1,10 +1,5 @@
 from bs4 import BeautifulSoup
-from scrapy import Request
-from scrapy_twrh.spiders.rental591 import Rental591Spider, util, list_mixin
-from scrapy_twrh.items import RawHouseItem, GenericHouseItem
-from scrapy_twrh.spiders import enums
-from playwright.async_api import async_playwright
-from scrapy_playwright.page import PageMethod
+from scrapy_twrh.spiders.rental591 import Rental591Spider, util
   
 class TaichungRentalSpider(Rental591Spider):  
     name = 'taichung_rental'  
@@ -48,7 +43,6 @@ class TaichungRentalSpider(Rental591Spider):
             1,  
         ))  
     
-        # promotion_houses = self.gen_promotion_house(response)  
         regular_houses = self.gen_regular_house(response)  
     
         for house in regular_houses:  
@@ -118,41 +112,3 @@ class TaichungRentalSpider(Rental591Spider):
             'tag_list': tag_list,
             'owner_info': owner_info,
         }
-    
-    # def gen_detail_request_args(self, rental_meta: util.DetailRequestMeta):
-    #     # https://rent.591.com.tw/17122751
-    #     url = "{}{}".format(util.DETAIL_ENDPOINT, rental_meta.id)
-
-    #     # don't filter as 591 use 30x to indicate house status...
-    #     return {
-    #         'dont_filter': True,
-    #         'url': url,
-    #         'errback': self.error_handler,
-    #         'meta': {
-    #             'rental': rental_meta,
-    #             'handle_httpstatus_list': [400, 404, 302, 301],
-    #             'playwright': True,
-    #             # 'playwright_include_page': True,
-    #             'playwright_page_methods': [
-    #                 PageMethod('wait_for_load_state', 'networkidle'),
-    #             ],
-    #             'playwright_page_init_callback': self.enable_playwright
-    #         },
-    #     }
-    
-    # def gen_list_request(self, rental_meta) -> Request:
-    #     args = {
-    #         'callback': self.parse_list,
-    #         'meta': {
-    #             'rental': rental_meta,
-    #             'handle_httpstatus_list': [400, 404, 302, 301],
-    #             'playwright': True,
-    #             'playwright_page_methods': [
-    #                 PageMethod('wait_for_load_state', 'networkidle'),
-    #             ],
-    #             'playwright_page_init_callback': self.enable_playwright,
-    #         },
-    #         'priority': self.DEFAULT_LIST_PRIORITY,
-    #         **self.gen_list_request_args(rental_meta)  # 合併其他 args
-    #     }
-    #     return Request(**args)
