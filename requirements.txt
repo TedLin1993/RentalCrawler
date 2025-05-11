@@ -4,3 +4,4 @@ playwright
 beautifulsoup4
 lxml
 scrapy-tw-rental-house==2.1.3
+python-dotenv
