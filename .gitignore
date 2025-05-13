@@ -7,3 +7,5 @@ RentalCrawler/spiders/__pycache__/
 rental_data_*
 rental_house.sqlite3
 .env
+js_cache/
+ocr_cache/
