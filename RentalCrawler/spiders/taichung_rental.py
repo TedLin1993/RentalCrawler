@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 from scrapy_twrh.spiders.rental591 import Rental591Spider, util
-import sqlite3
 import requests
 import os
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 
 class TaichungRentalSpider(Rental591Spider):
@@ -26,26 +26,17 @@ class TaichungRentalSpider(Rental591Spider):
 
         self.dup_house_ids = set()
 
-        conn = sqlite3.connect('rental_house.sqlite3')
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS rental_house (
-                house_id TEXT PRIMARY KEY,
-                url TEXT,
-                title TEXT,
-                img_url TEXT,
-                price TEXT,
-                room_type TEXT,
-                tag_list TEXT,
-                owner_info TEXT
-            );
-        ''')
-        conn.commit()
-        for row in c.execute('SELECT house_id FROM rental_house'):
-            self.dup_house_ids.add(row[0])
-        conn.close()
-
         load_dotenv()
+        self.supabase_url = os.getenv("SUPABASE_URL")
+        self.supabase_key = os.getenv("SUPABASE_KEY")
+        self.supabase: Client = create_client(
+            self.supabase_url, self.supabase_key)
+
+        # 從 supabase 撈出全部 house_id
+        data = self.supabase.table('rental_house').select('house_id').execute()
+        for row in data.data:
+            self.dup_house_ids.add(row['house_id'])
+
         self.discord_webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
 
     # 取得台中市的租屋列表請求
