@@ -20,6 +20,7 @@ class TaichungRentalSpider(Rental591Spider):
             'section': '103,102,101,98,99',  # 中區,西區,北屯區,東區,北區的代碼
             'price': '10000_15000',  # 租金範圍10000-15000
             'shType': 'host',  # 屋主直租
+            'sort': 'posttime_desc',  # 依上架時間排序
         }
 
         self.max_page = 1  # 限制爬取頁數
